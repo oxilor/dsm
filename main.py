@@ -143,6 +143,7 @@ class DsmToolCli:
       dest='to',
       default=None,
       required=True,
+      action='append',
       help='The path to a schema file or directory with multiple SQL files (e.g. one file is one table).',
     )
     parser.add_argument(

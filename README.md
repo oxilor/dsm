@@ -24,7 +24,7 @@ docker run --rm --net=host -it -v "${PWD}/src/schema":/schema oxilor/dsm diff \
 
 Arguments:
 - `--uri` [required] – The [connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6) to the target database.
-- `--to` [required] – The path to a schema file or directory with multiple SQL files (e.g. one file is one table).
+- `--to` [required] – The path to a schema file or directory with multiple SQL files (e.g. one file is one table). This argument can be specified multiple times.
 - `--temp-db-name` [optional, default='temp'] – The name of the temporary database used to detect the desired schema.
 - `--unsafe` [optional] – Don't throw an exception if DROP statements are generated.
 - `--schema` [optional] – Generate DDL statements only for the specified schema.

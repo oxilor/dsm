@@ -79,7 +79,9 @@ def get_migration(args):
   try:
     # Apply the desired schema against the temporary database
     temp_db_uri = replace_db_name_in_dsn(args.uri, args.temp_db_name)
-    desired_schema = read_schema(args.to).strip()
+    desired_schema = ''
+    for to in args.to:
+      desired_schema += read_schema(to) + '\n'
     if desired_schema:
       execute_sql(temp_db_uri, desired_schema)
 
