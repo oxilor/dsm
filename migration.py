@@ -19,7 +19,7 @@ def read_schema(path: str):
 
   if isdir(full_path):
     statements = ''
-    sql_files = glob(join(full_path, '*.sql'))
+    sql_files = glob(join(full_path, '**/*.sql'), recursive=True)
     for file_name in sorted(sql_files):
       file_path = join(cwd, file_name)
       if (isfile(file_path)):
