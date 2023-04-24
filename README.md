@@ -18,14 +18,15 @@ Prints DDL statements that should be executed to reach the desired schema.
 
 ```sh
 docker run --rm --net=host -it -v "${PWD}/src/schema":/schema oxilor/dsm diff \
-  --uri 'postgresql://user:password@localhost:5432/my_database' \
+  --uri 'postgresql://user:password@localhost:5432/db_name' \
+  --temp-uri 'postgresql://user:password@localhost:5432/temp_db_name' \
   --to /schema/main.sql
 ```
 
 Arguments:
 - `--uri` [required] – The [connection URI](https://www.postgresql.org/docs/current/libpq-connect.html#id-1.7.3.8.3.6) to the target database.
-- `--to` [required] – The path to a schema file or directory with multiple SQL files (e.g. one file is one table). This argument can be specified multiple times.
-- `--temp-db-name` [optional, default='temp'] – The name of the temporary database used to detect the desired schema.
+- `--temp-uri` [required] – The connection URI to the temporary database (must be empty). All SQL files with your schema will be executed in it (see `--to` argument). After that the difference between the target and temporary databases will be determined.
+- `--to` [required] – The path to a file or directory with multiple files with your schema (e.g. one file is one table). This argument can be specified multiple times.
 - `--unsafe` [optional] – Don't throw an exception if DROP statements are generated.
 - `--schema` [optional] – Generate DDL statements only for the specified schema.
 - `--exclude-schema` [optional] – Generate DDL statements for all schemas except the specified one.
@@ -43,7 +44,8 @@ Generates DDL statements and executes them after confirmation.
 
 ```sh
 docker run --rm --net=host -it -v "${PWD}/src/schema":/schema oxilor/dsm apply \
-  --uri 'postgresql://user:password@localhost:5432/my_database' \
+  --uri 'postgresql://user:password@localhost:5432/db_name' \
+  --temp-uri 'postgresql://user:password@localhost:5432/temp_db_name' \
   --to /schema/main.sql
 ```
 
@@ -66,8 +68,9 @@ Saves DDL statements into a file.
 
 ```sh
 docker run --rm --net=host -it -v "${PWD}/src/schema":/schema oxilor/dsm save \
-  --uri 'postgresql://user:password@localhost:5432/my_database' \
-  --to /schema/main.sql \
+  --uri 'postgresql://user:password@localhost:5432/db_name' \
+  --temp-uri 'postgresql://user:password@localhost:5432/temp_db_name' \
+  --to /schema/main.sql
   --file /schema/pending.sql
 ```
 
@@ -87,7 +90,7 @@ Executes SQL statements from a file.
 
 ```sh
 docker run --rm --net=host -it -v "${PWD}/src/schema":/schema oxilor/dsm execute \
-  --uri 'postgresql://user:password@localhost:5432/my_database' \
+  --uri 'postgresql://user:password@localhost:5432/db_name' \
   --file /schema/pending.sql
 ```
 

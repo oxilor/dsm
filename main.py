@@ -1,6 +1,5 @@
-from os import getcwd, remove
+from os import getcwd
 from os.path import join
-import re
 from sys import argv
 from argparse import ArgumentParser, Namespace
 from migration import execute_sql, get_migration
@@ -139,18 +138,19 @@ class DsmToolCli:
       help='The connection URI to the target database.',
     )
     parser.add_argument(
+      '--temp-uri',
+      dest='temp_uri',
+      default=None,
+      required=True,
+      help='The connection URI to the temporary database (must be empty).',
+    )
+    parser.add_argument(
       '--to',
       dest='to',
       default=None,
       required=True,
       action='append',
-      help='The path to a schema file or directory with multiple SQL files (e.g. one file is one table).',
-    )
-    parser.add_argument(
-      '--temp-db-name',
-      dest='temp_db_name',
-      default='temp',
-      help='The name of the temporary database used to detect the desired schema.',
+      help='The path to a file or directory with multiple files with your schema (e.g. one file is one table).',
     )
     parser.add_argument(
       '--unsafe',
