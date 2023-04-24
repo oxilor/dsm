@@ -104,3 +104,120 @@ The following changes were made:
 
 alter table "public"."tasks" add column "name" text not null;
 ```
+
+## Usage examples
+
+All the examples below use the following docker image.
+
+temp-postgres/Dockerfile:
+```Dockerfile
+FROM postgres:15-alpine
+COPY ./init.sh /docker-entrypoint-initdb.d/
+ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
+CMD ["postgres"]
+```
+
+temp-postgres/init.sh:
+```sh
+#!/bin/sh
+set -e
+
+psql -U postgres -v ON_ERROR_STOP=1 <<-END
+  CREATE DATABASE $POSTGRES_NEW_DB;
+END
+```
+
+### Example 1. Docker compose
+
+docker-compose.yml:
+```yaml
+version: '3.2'
+
+services:
+  dsm:
+    image: oxilor/dsm
+    # Check the connection URI to the target database (--uri)
+    command: >
+      apply
+      --uri "postgresql://postgres:postgres@localhost:5432/db_name"
+      --temp-uri "postgresql://postgres:postgres@localhost:5431/temp"
+      --to /schema
+      --unsafe
+      --ignore-extension-versions
+    network_mode: host
+    volumes:
+      - '../schema:/schema' # Check the path to a directory with your schema files (../schema)
+    depends_on:
+      temp-postgres:
+        condition: service_healthy
+
+  temp-postgres:
+    build: ./temp-postgres # Check the path to the docker image (see above)
+    ports:
+      - "5431:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_NEW_DB: temp
+    healthcheck:
+      test: pg_isready -U postgres
+      interval: 3s
+```
+
+How to run:
+```sh
+docker compose run dsm
+```
+
+### Example 2. Docker
+
+sync-schema.sh:
+```sh
+#!/bin/sh
+
+# Build a docker image with the temporary database
+docker build -t temp-postgres ./temp-postgres # Check the path to the docker image (see above)
+
+# Start the temporary database
+docker run -d \
+  -e "POSTGRES_USER=postgres" \
+  -e "POSTGRES_PASSWORD=postgres" \
+  -e "POSTGRES_NEW_DB=temp" \
+  -p "5431:5432" \
+  --health-cmd="pg_isready -U postgres" \
+  --health-interval=3s \
+  --name temp-postgres \
+  temp-postgres
+
+# Wait until the database is ready
+until docker inspect --format='{{.State.Health.Status}}' temp-postgres | grep -q 'healthy';
+do
+  sleep 3;
+done
+
+on_exit() {
+  # Delete the temporary database
+  {
+    docker stop temp-postgres
+    docker rm temp-postgres
+  } &> /dev/null
+}
+trap on_exit EXIT
+
+# Sync the database schema
+# Check the path to a directory with your schema files (../schema)
+# Check the connection URI to the target database (--uri)
+docker run --rm --network=host -it \
+  -v "../schema:/schema" \
+  oxilor/dsm apply \
+    --uri "postgresql://postgres:postgres@localhost:5432/db_name" \
+    --temp-uri "postgresql://postgres:postgres@localhost:5431/temp" \
+    --to /schema \
+    --unsafe \
+    --ignore-extension-versions
+```
+
+How to run:
+```sh
+sh sync-schema.sh
+```
