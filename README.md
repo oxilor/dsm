@@ -107,26 +107,6 @@ alter table "public"."tasks" add column "name" text not null;
 
 ## Usage examples
 
-All the examples below use the following docker image.
-
-temp-postgres/Dockerfile:
-```Dockerfile
-FROM postgres:15-alpine
-COPY ./init.sh /docker-entrypoint-initdb.d/
-ENTRYPOINT ["/usr/local/bin/docker-entrypoint.sh"]
-CMD ["postgres"]
-```
-
-temp-postgres/init.sh:
-```sh
-#!/bin/sh
-set -e
-
-psql -U postgres -v ON_ERROR_STOP=1 <<-END
-  CREATE DATABASE $POSTGRES_NEW_DB;
-END
-```
-
 ### Example 1. Docker compose
 
 docker-compose.yml:
@@ -152,13 +132,13 @@ services:
         condition: service_healthy
 
   temp-postgres:
-    build: ./temp-postgres # Check the path to the docker image (see above)
+    image: postgres:15-alpine
     ports:
       - "5431:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
-      POSTGRES_NEW_DB: temp
+      POSTGRES_DB: temp
     healthcheck:
       test: pg_isready -U postgres
       interval: 3s
@@ -175,19 +155,16 @@ sync-schema.sh:
 ```sh
 #!/bin/sh
 
-# Build a docker image with the temporary database
-docker build -t temp-postgres ./temp-postgres # Check the path to the docker image (see above)
-
 # Start the temporary database
 docker run -d \
   -e "POSTGRES_USER=postgres" \
   -e "POSTGRES_PASSWORD=postgres" \
-  -e "POSTGRES_NEW_DB=temp" \
+  -e "POSTGRES_DB=temp" \
   -p "5431:5432" \
   --health-cmd="pg_isready -U postgres" \
   --health-interval=3s \
   --name temp-postgres \
-  temp-postgres
+  postgres:15-alpine
 
 # Wait until the database is ready
 until docker inspect --format='{{.State.Health.Status}}' temp-postgres | grep -q 'healthy';
