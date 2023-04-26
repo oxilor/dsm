@@ -41,11 +41,8 @@ class DsmToolCli:
     parser = ArgumentParser(description=commandHelpMap['diff'])
     args = self.parse_diff_arguments(parser)
     statements = get_migration(args)
-
     if statements:
       print(statements)
-    else:
-      self.print_no_changes()
 
   def apply(self) -> None:
     parser = ArgumentParser(description=commandHelpMap['apply'])

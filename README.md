@@ -38,6 +38,17 @@ Example output:
 alter table "public"."tasks" add column "name" text not null;
 ```
 
+If there are no changes, then there is no output data. This is useful for CI jobs. For example:
+```sh
+diff=$(docker run oxilor/dsm diff) # The arguments are omitted for simplicity
+
+if [ -z $diff ]; then
+  echo "No changes"
+else
+  echo $diff
+fi
+```
+
 ### apply
 
 Generates DDL statements and executes them after confirmation.
